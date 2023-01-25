@@ -1,5 +1,6 @@
 import socket
 from threading import Thread
+import elgamal
 
 # server's IP address
 SERVER_HOST = "0.0.0.0"
@@ -17,6 +18,8 @@ s.bind((SERVER_HOST, SERVER_PORT))
 # listen for upcoming connections
 s.listen(5)
 print(f"[*] Listening as {SERVER_HOST}:{SERVER_PORT}")
+
+# keys = elgamal.generate_keys()
 
 def listen_for_client(cs):
     """
