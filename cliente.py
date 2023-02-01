@@ -67,8 +67,8 @@ def decrypt(en_msg, p, key, q):
 
 q = random.randint(pow(10, 20), pow(10, 50))
 g = random.randint(2, q)
-key = gen_key(q)# Private key for receiver
-h = power(g, key, q)
+private_key = gen_key(q)# Private key for receiver
+h = power(g, private_key, q)
 
 public_key = str(q) + " " + str(h) + " " + str(g)
 
@@ -109,20 +109,30 @@ keys = []
 def listen_for_messages():
 	while True:
 		message = s.recv(1024).decode()
-		msgEnc, keyP = message.split('-')
-		if (msgEnc != "key"):
-			msgEnc = msgEnc.strip('[').strip(']').split(',')
-			for i in range(0, len(msgEnc)):
-				msgEnc[i] = int(msgEnc[i].strip(' '))
-			keyP = int(keyP)
-			dr_msg = decrypt(msgEnc, keyP, key, q)
-			dmsg = ''.join(dr_msg)
-			print("\n" + dmsg)
-			print(keyP)
-		else:
-			if(keyP != public_key):
-				keys.append(keyP)
-			print(keys)
+		#print(message)
+		try:
+			msgEnc, keyP = message.split('-')
+			#print(msgEnc)
+			if (msgEnc != "key"):
+				#print("OI MEU CHAPA")
+				msgEnc = msgEnc.strip('[').strip(']').split(',')
+				for i in range(0, len(msgEnc)):
+					msgEnc[i] = int(msgEnc[i].strip(' '))
+				keyP = int(keyP)
+				dr_msg = decrypt(msgEnc, keyP, private_key, q)
+				dmsg = ''.join(dr_msg)
+				print("\n" + dmsg)
+				#print(keyP)
+			elif (msgEnc == "key"):
+				if((keyP != public_key) and (keyP not in keys)):
+					keyPublic = keyP.split(" ")
+					keys.append(keyPublic)
+					print(keyPublic)
+				#print(keys)
+		except Exception as e:
+            # client no longer connected
+            # remove it from the set
+			print(f"[!] Error: {e}")
 
 # make a thread that listens for messages to this client & print them
 t = Thread(target=listen_for_messages)
@@ -133,18 +143,21 @@ t.start()
 
 while True:
     # input message we want to send to the server
-    to_send =  input()
-    en_msg, p = encrypt(to_send, q, h, g)
-    msgEncrypt = str(en_msg) + "-" + str(p)
+	to_send =  input()
+	#print(keys)
+	for key in keys:
+		en_msg, p = encrypt(to_send, int(key[0]), int(key[1]), int(key[2]))
+		msgEncrypt = str(en_msg) + "-" + str(p)
+		s.send(msgEncrypt.encode())
 
     # a way to exit the program
-    if to_send.lower() == 'q':
-        break
+	if to_send.lower() == 'q':
+		break
     # add the datetime, name & the color of the sender
-    date_now = datetime.now().strftime('%Y-%m-%d %H:%M:%S') 
-    to_send = f"{client_color}[{date_now}] {name}{separator_token}{to_send}{Fore.RESET}"
+	date_now = datetime.now().strftime('%Y-%m-%d %H:%M:%S') 
+	to_send = f"{client_color}[{date_now}] {name}{separator_token}{to_send}{Fore.RESET}"
     # finally, send the message
-    s.send(msgEncrypt.encode())
+    #s.send(msgEncrypt.encode())
 
 # close the socket
 s.close()

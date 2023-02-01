@@ -1,6 +1,5 @@
 import socket
 from threading import Thread
-import elgamal
 
 # server's IP address
 SERVER_HOST = "0.0.0.0"

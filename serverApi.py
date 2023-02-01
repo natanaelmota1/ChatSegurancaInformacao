@@ -1,6 +1,5 @@
 import socket
 from threading import Thread
-import elgamal
 
 # server's IP address
 SERVER_HOST = "0.0.0.0"
@@ -48,6 +47,9 @@ def listen_for_client(cs):
         # iterate over all connected sockets
         for client_socket in client_sockets:
             # and send the message
+            if (msgEnc == "key"):
+                client_socket.send(("key-" + keys[0]).encode())
+                #print("key-" + key)
             client_socket.send(msg.encode())
 
 while True:
