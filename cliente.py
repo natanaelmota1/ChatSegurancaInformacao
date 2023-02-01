@@ -70,6 +70,8 @@ g = random.randint(2, q)
 key = gen_key(q)# Private key for receiver
 h = power(g, key, q)
 
+public_key = str(q) + " " + str(h) + " " + str(g)
+
 #######################################################################
 
 # init colors
@@ -101,20 +103,26 @@ print("[+] Connected.")
 
 # prompt the client for a name
 name = input("Enter your name: ")
+s.send(("key-"+public_key).encode())
+keys = []
 
 def listen_for_messages():
-    while True:
-        message = s.recv(1024).decode()
-        msgEnc, keyP = message.split('-')
-        msgEnc = msgEnc.strip('[').strip(']').split(',')
-        for i in range(0, len(msgEnc)):
-            msgEnc[i] = int(msgEnc[i].strip(' '))
-
-        keyP = int(keyP)
-        dr_msg = decrypt(msgEnc, keyP, key, q)
-        dmsg = ''.join(dr_msg)
-        print("\n" + dmsg)
-        print(keyP)
+	while True:
+		message = s.recv(1024).decode()
+		msgEnc, keyP = message.split('-')
+		if (msgEnc != "key"):
+			msgEnc = msgEnc.strip('[').strip(']').split(',')
+			for i in range(0, len(msgEnc)):
+				msgEnc[i] = int(msgEnc[i].strip(' '))
+			keyP = int(keyP)
+			dr_msg = decrypt(msgEnc, keyP, key, q)
+			dmsg = ''.join(dr_msg)
+			print("\n" + dmsg)
+			print(keyP)
+		else:
+			if(keyP != public_key):
+				keys.append(keyP)
+			print(keys)
 
 # make a thread that listens for messages to this client & print them
 t = Thread(target=listen_for_messages)

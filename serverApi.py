@@ -18,6 +18,7 @@ s.bind((SERVER_HOST, SERVER_PORT))
 # listen for upcoming connections
 s.listen(5)
 print(f"[*] Listening as {SERVER_HOST}:{SERVER_PORT}")
+keys = []
 
 # keys = elgamal.generate_keys()
 
@@ -30,6 +31,11 @@ def listen_for_client(cs):
         try:
             # keep listening for a message from `cs` socket
             msg = cs.recv(1024).decode()
+            msgEnc, keyP = msg.split('-')
+            if (msgEnc == "key"):
+                keys.append(keyP)
+                print(keys)
+
         except Exception as e:
             # client no longer connected
             # remove it from the set
