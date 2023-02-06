@@ -33,7 +33,7 @@ def listen_for_client(cs):
             msgEnc, keyP = msg.split('-')
             if (msgEnc == "key"):
                 keys.append(keyP)
-                print(keys)
+                #print(keys)
 
         except Exception as e:
             # client no longer connected

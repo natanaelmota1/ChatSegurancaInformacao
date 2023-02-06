@@ -127,7 +127,7 @@ def listen_for_messages():
 				if((keyP != public_key) and (keyP not in keys)):
 					keyPublic = keyP.split(" ")
 					keys.append(keyPublic)
-					print(keyPublic)
+			#print(keys)
 				#print(keys)
 		except Exception as e:
             # client no longer connected
@@ -145,6 +145,7 @@ while True:
     # input message we want to send to the server
 	to_send =  input()
 	#print(keys)
+	s.send(("key-"+public_key).encode())
 	for key in keys:
 		en_msg, p = encrypt(to_send, int(key[0]), int(key[1]), int(key[2]))
 		msgEncrypt = str(en_msg) + "-" + str(p)
