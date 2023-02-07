@@ -67,14 +67,8 @@ while True:
         break
     # add the datetime, name & the color of the sender
     date_now = datetime.now().strftime('%Y-%m-%d %H:%M:%S') 
-
-    # to_send = f"{client_color}[{date_now}] {name}: {to_send}{Fore.RESET}"
-    to_send = f"{name}: {to_send}"
-
-    encrypted_msg, p = elgamal.encrypt(to_send, keys['q'], keys['h'], keys['g'])
-    # print('\nmsg: {}'.format(encrypted_msg))
-    # print('\np: {}'.format(p))
-    
+    to_send = f"{client_color}[{date_now}] {name}{separator_token}{to_send}{Fore.RESET}"
+    print("café = " + to_send)
     # finally, send the message
     s.send((' '.join(str(e) for e in encrypted_msg) + '|' + str(p)).encode())
 
