@@ -47,8 +47,8 @@ def encrypt(msg, q, h, g):
 	for i in range(0, len(msg)):
 		en_msg.append(msg[i])
 
-	print("g^k used : ", p)
-	print("g^ak used : ", s)
+	# print("g^k used : ", p)
+	# print("g^ak used : ", s)
 	for i in range(0, len(en_msg)):
 		en_msg[i] = s * ord(en_msg[i])
 
@@ -63,25 +63,41 @@ def decrypt(en_msg, p, key, q):
 		
 	return dr_msg
 
-# Driver code
-def main():
-
-	msg = 'aula de redes aaaaaaa'
-	print("Original Message :", msg)
-
+def init():
 	q = random.randint(pow(10, 20), pow(10, 50))
 	g = random.randint(2, q)
 
 	key = gen_key(q)# Private key for receiver
 	h = power(g, key, q)
-	print("g used : ", g)
-	print("g^a used : ", h)
+	
+	keys = {
+		'q': q,
+		'g': g,
+		'k': key,
+		'h': h
+	}
 
-	en_msg, p = encrypt(msg, q, h, g)
-	dr_msg = decrypt(en_msg, p, key, q)
-	dmsg = ''.join(dr_msg)
-	print("Decrypted Message :", dmsg)
+	return keys
+
+# Driver code
+# def main():
+
+# 	msg = 'aula de redes aaaaaaa'
+# 	print("Original Message :", msg)
+
+# 	q = random.randint(pow(10, 20), pow(10, 50))
+# 	g = random.randint(2, q)
+
+# 	key = gen_key(q)# Private key for receiver
+# 	h = power(g, key, q)
+# 	print("g used : ", g)
+# 	print("g^a used : ", h)
+
+# 	en_msg, p = encrypt(msg, q, h, g)
+# 	dr_msg = decrypt(en_msg, p, key, q)
+# 	dmsg = ''.join(dr_msg)
+# 	print("Decrypted Message :", dmsg)
 
 
-if __name__ == '__main__':
-	main()
+# if __name__ == '__main__':
+# 	main()

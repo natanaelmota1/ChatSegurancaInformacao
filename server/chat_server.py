@@ -1,6 +1,6 @@
 import socket
 from threading import Thread
-import elgamal
+import client.elgamal.elgamal as elgamal
 
 # server's IP address
 SERVER_HOST = "0.0.0.0"
@@ -29,7 +29,7 @@ def listen_for_client(cs):
     while True:
         try:
             # keep listening for a message from `cs` socket
-            msg = cs.recv(1024).decode()
+            msg = cs.recv(2048).decode()
         except Exception as e:
             # client no longer connected
             # remove it from the set
@@ -38,18 +38,29 @@ def listen_for_client(cs):
         else:
             # if we received a message, replace the <SEP> 
             # token with ": " for nice printing
+
+            # print('message received')
             msg = msg.replace(separator_token, ": ")
+            # continue
+
+
         # iterate over all connected sockets
         for client_socket in client_sockets:
             # and send the message
             client_socket.send(msg.encode())
 
+keys = elgamal.init()
+
 while True:
     # we keep listening for new connections all the time
     client_socket, client_address = s.accept()
     print(f"[+] {client_address} connected.")
+
     # add the new connected client to connected sockets
     client_sockets.add(client_socket)
+    to_send = f'{keys}'
+    client_socket.send(bytes())
+
     # start a new thread that listens for each client's messages
     t = Thread(target=listen_for_client, args=(client_socket,))
     # make the thread daemon so it ends whenever the main thread ends

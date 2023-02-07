@@ -1,9 +1,9 @@
 import socket
 from threading import Thread
-import elgamal
+import client.elgamal as elgamal
 
 # server's IP address
-SERVER_HOST = "0.0.0.0"
+SERVER_HOST = "172.26.233.243"
 SERVER_PORT = 5002 # port we want to use
 separator_token = "<SEP>" # we will use this to separate the client name & message
 
@@ -39,6 +39,8 @@ def listen_for_client(cs):
             # if we received a message, replace the <SEP> 
             # token with ": " for nice printing
             msg = msg.replace(separator_token, ": ")
+
+            
         # iterate over all connected sockets
         for client_socket in client_sockets:
             # and send the message

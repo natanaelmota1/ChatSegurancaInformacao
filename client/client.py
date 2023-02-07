@@ -4,6 +4,8 @@ from threading import Thread
 from datetime import datetime
 from colorama import Fore, init, Back
 
+import elgamal.elgamal as elgamal
+
 # init colors
 init()
 
@@ -36,8 +38,16 @@ name = input("Enter your name: ")
 
 def listen_for_messages():
     while True:
-        message = s.recv(1024).decode()
-        print("\n" + message)
+        msg = s.recv(2048).decode()
+        p = msg.split('|')
+        msg = p[0].split(' ')
+        msg = [int(i) for i in msg]
+        p = int(p[-1])
+        decrypted_msg = elgamal.decrypt(msg, p, keys['k'], keys['q'])
+        dmsg = ''.join(decrypted_msg)
+        print("\n" + dmsg)
+        # print('\nmsg: {}'.format(msg))
+        # print('\np: {}'.format(p))
 
 # make a thread that listens for messages to this client & print them
 t = Thread(target=listen_for_messages)
@@ -46,17 +56,27 @@ t.daemon = True
 # start the thread
 t.start()
 
+keys = elgamal.init()
+
 while True:
     # input message we want to send to the server
     to_send =  input()
+
     # a way to exit the program
     if to_send.lower() == 'q':
         break
     # add the datetime, name & the color of the sender
     date_now = datetime.now().strftime('%Y-%m-%d %H:%M:%S') 
-    to_send = f"{client_color}[{date_now}] {name}{separator_token}{to_send}{Fore.RESET}"
+
+    # to_send = f"{client_color}[{date_now}] {name}: {to_send}{Fore.RESET}"
+    to_send = f"{name}: {to_send}"
+
+    encrypted_msg, p = elgamal.encrypt(to_send, keys['q'], keys['h'], keys['g'])
+    # print('\nmsg: {}'.format(encrypted_msg))
+    # print('\np: {}'.format(p))
+    
     # finally, send the message
-    s.send(to_send.encode())
+    s.send((' '.join(str(e) for e in encrypted_msg) + '|' + str(p)).encode())
 
 # close the socket
 s.close()
