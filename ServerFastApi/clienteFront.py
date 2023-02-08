@@ -2,12 +2,6 @@ import tkinter as tk
 import requests
 import random
 from math import pow
-import sys
-
-if sys.platform == "win32":
-    import os
-    os.environ['TCL_LIBRARY'] = r'C:\Python<versão>\tcl\tcl8.6'
-    os.environ['TK_LIBRARY'] = r'C:\Python<versão>\tcl\tk8.6'
 
 a = random.randint(2, 10)
 
@@ -76,7 +70,6 @@ public_key = str(q) + " " + str(h) + " " + str(g)
 
 # Criar a janela principal
 root = tk.Tk()
-root.tk.call('encoding', 'system', 'utf-8')
 root.title("Secure Chat")
 
 # Variáveis globais
