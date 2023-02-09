@@ -1,6 +1,7 @@
 import requests
 import random
 from math import pow
+import threading
 
 a = random.randint(2, 10)
 
@@ -72,10 +73,27 @@ cliente_json = {"name": name, "key": public_key}
 response = requests.post("http://127.0.0.1:8000/client", json=cliente_json)
 #print(response.json())
 
+messages_history = []
+def receive_messages():
+	while(True):
+		messages = requests.get("http://127.0.0.1:8000/messages")
+		for message in messages.json():
+			key = message["key"]
+			if (key == public_key):
+				message_save = message["sender"] + ": " + str(decrypt(message["message"], message["p"], private_key, q))
+				if (message_save not in messages_history):
+					messages_history.append(message_save)
+					print(message["sender"] + ": " + str(message["message"]))
+					print(message_save)
+
 
 keys = []
 
 while(True):
+
+	# Receber todas as mensagens (em segundo plano)
+    receive_thread = threading.Thread(target=receive_messages)
+    receive_thread.start()
 
     message_input = input()
 
@@ -93,10 +111,3 @@ while(True):
         message_json = {"sender": name, "message": en_msg, "p": p, "key": key}
         response = requests.post("http://127.0.0.1:8000/message", json=message_json)
         #print(response.json())
-
-    # Receber todas as mensagens
-    messages = requests.get("http://127.0.0.1:8000/messages")
-    for message in messages.json():
-        key = message["key"]
-        if (key == public_key):
-            print(message["sender"] + ": " + str(decrypt(message["message"], message["p"], private_key, q)))

@@ -11,7 +11,7 @@ root = tk.Tk()
 root.title("Chat")
 root.geometry("400x500")
 
-chat_log = tk.Text(root, state='enabled')
+chat_log = tk.Text(root, state='disabled')
 chat_log.pack(fill='both', expand=True)
 
 input_frame = tk.Frame(root)

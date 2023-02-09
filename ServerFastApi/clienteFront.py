@@ -73,8 +73,9 @@ root = tk.Tk()
 root.title("Secure Chat")
 
 # Variáveis globais
-name = ""
+#name = ""
 keys = []
+messages_history = []
 
 # Função para enviar uma mensagem
 def send_message(message):
@@ -82,16 +83,17 @@ def send_message(message):
         en_msg, p = encrypt(message, int(key.split(" ")[0]), int(key.split(" ")[1]), int(key.split(" ")[2]))
         message_json = {"sender": name, "message": en_msg, "p": p, "key": key}
         response = requests.post("http://127.0.0.1:8000/message", json=message_json)
-    message_text.insert(tk.END, message_json["sender"] + ": " + message + "\n")
+    message_text.insert(tk.END, name + ": " + message + "\n")
 
 # Função para atualizar as mensagens recebidas
 def update_messages():
-    messages = requests.get("http://127.0.0.1:8000/messages")
-    for message in messages.json():
-        key = message["key"]
-        if (key == public_key):
-            message_text.insert(tk.END, message["sender"] + ": " + str(decrypt(message["message"], message["p"], private_key, q)) + "\n")
-    root.after(1000, update_messages)
+	messages = requests.get("http://127.0.0.1:8000/messages")
+	for message in messages.json():
+		key = message["key"]	
+		p = message["p"]
+		if (key == public_key and p not in messages_history):
+			message_text.insert(tk.END, message["sender"] + ": " + str(decrypt(message["message"], message["p"], private_key, q)) + "\n")
+	root.after(1000, update_messages)
 
 # Função para atualizar as chaves públicas
 def update_keys():
@@ -112,12 +114,13 @@ send_name_button = tk.Button(root, text="Enviar Nome", command=lambda: set_name(
 send_name_button.pack()
 
 def set_name(entry):
-    name = entry
-    public_key, private_key, q
-    cliente_json = {"name": name, "key": public_key}
-    print(cliente_json)
-    response = requests.post("http://127.0.0.1:8000/client", json=cliente_json)
-    update_keys()
+	global name
+	name = entry
+	public_key, private_key, q
+	cliente_json = {"name": name, "key": public_key}
+	print(cliente_json)
+	response = requests.post("http://127.0.0.1:8000/client", json=cliente_json)
+	update_keys()
 
 # Criar um campo de texto para o usuário digitar a mensagem
 message_entry = tk.Entry(root)
