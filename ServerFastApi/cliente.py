@@ -86,7 +86,6 @@ def receive_messages():
 					print(message["sender"] + ": " + str(message["message"]))
 					print(message_save)
 
-
 keys = []
 
 while(True):
