@@ -75,13 +75,13 @@ public_key = str(q) + " " + str(h) + " " + str(g)
 name = input("Enter your name: ")
 
 async def receive_messages():
-    async with websockets.connect('ws://localhost:8000/ws') as websocket:
+    async with websockets.connect('ws://localhost:8000') as websocket:
         while True:
             message = await websocket.recv()
             print(decrypt(message.message, message.p, private_key, q))
 
 async def send_message(message: str, recipients: List[str], private_key: int, q: int, g: int):
-    async with websockets.connect('ws://localhost:8000/ws') as websocket:
+    async with websockets.connect('ws://localhost:8000') as websocket:
         for recipient in recipients:
             q_key, h_key, g_key = map(int, recipient.split())
             en_msg, p = encrypt(message, q_key, h_key, g_key)
@@ -89,7 +89,7 @@ async def send_message(message: str, recipients: List[str], private_key: int, q:
             await websocket.send(json.dumps(message_json))
 
 async def handle_client():
-    async with websockets.connect('ws://localhost:8000/ws') as websocket:
+    async with websockets.connect('ws://localhost:8000') as websocket:
         client_json = {"name": name, "key": public_key}
         await websocket.send(json.dumps(client_json))
         await receive_messages()
