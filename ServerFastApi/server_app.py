@@ -53,7 +53,7 @@ async def websocket_endpoint(websocket: WebSocket, client_id: int):
             data = await websocket.receive_text()
             # message_json = json.loads(message)
             # await manager.broadcast(f"{client_id}: {message_json}")
-            await manager.send_personal_message(f"You: {data}", websocket)
+            # await manager.send_personal_message(f"You: {data}", websocket)
             message = {"time":current_time,"clientId":client_id,"message":data}
             await manager.broadcast(json.dumps(message))
 
