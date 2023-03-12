@@ -1,7 +1,7 @@
 import logo from "./logo.svg";
 import React, { useState, useEffect } from "react";
 import "./App.css";
-import BigInt from 'big-integer'
+// import BigInt from 'big-integer'
 // import Elgamal from 'elgamal'
 
 const clientId = Math.floor(new Date().getTime() / 1000);
@@ -102,7 +102,7 @@ function App() {
       const msgKey = {encryption, p, publicKey}
       console.log('msgKey', msgKey)
       ws.send(encryption);
-      ws.send(connectedMsg);
+      // ws.send(connectedMsg);
 
     };
 
@@ -126,7 +126,7 @@ function App() {
     const msgKey = {encryption, p, publicKey}
     console.log('msgKey', msgKey)
     websckt.send(encryption);
-    websckt.send(message);
+    // websckt.send(message);
 
     // recieve message every send message
     websckt.onmessage = (e) => {
