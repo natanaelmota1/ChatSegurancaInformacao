@@ -51,11 +51,18 @@ async def websocket_endpoint(websocket: WebSocket, client_id: int):
     try:
         while True:
             data = await websocket.receive_text()
-            # message_json = json.loads(message)
+            message_json = json.loads(data)
             # await manager.broadcast(f"{client_id}: {message_json}")
             # await manager.send_personal_message(f"You: {data}", websocket)
-            message = {"time":current_time,"clientId":client_id,"message":data}
-            await manager.broadcast(json.dumps(message))
+            # message = {"time":current_time,"clientId":client_id,"message":data}
+            message = {
+                "time":current_time,
+                "clientId":client_id,
+                "message":data
+            }
+            print(message)
+
+            await manager.broadcast(json.dumps(message_json))
 
 
             # if "name" in data:

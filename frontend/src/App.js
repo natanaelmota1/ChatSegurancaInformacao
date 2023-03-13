@@ -1,86 +1,102 @@
 import logo from "./logo.svg";
 import React, { useState, useEffect } from "react";
 import "./App.css";
-// import BigInt from 'big-integer'
-// import Elgamal from 'elgamal'
+import BigInt from 'big-integer'
 
 const clientId = Math.floor(new Date().getTime() / 1000);
 
-// function gcd(a, b){
-//   if (a < b) return gcd(b, a)
-//   else if (a % b === 0) return b
-//   else return gcd(b, a % b)
+// function gcd(a, b) {
+//   console.log('entrou aqui', a, b)
+//   if (a < b) {
+//     return gcd(b, a);
+//   } else if (a % b === 0) {
+//     return b;
+//   } else {
+//     return gcd(b, a % b);
+//   }
 // }
 
-// function generateKey(q) {
-//   // const a = BigInt(Math.floor(Math.random() * q)); // Generate a random integer a in the range [2, p-2]
-//   var key = Math.floor(Math.random() * q  )// Generate a random integer a in the range [2, p-2]
-//   while (gcd(q, key) !== 1){
-//     key = Math.floor(Math.random() * q)
-//   }
+function generateKey(q) {
+  let key = BigInt(Math.floor(Math.random() * (q - 2 * BigInt(10 ** 20))) + BigInt(10 ** 20));
+  console.log('key', key)
+  // while (gcd(q, key) !== 1) {
+  //   key = BigInt(Math.floor(Math.random() * (q - 2 * BigInt(10 ** 20))) + BigInt(10 ** 20));
+  // }
+  return key;
+}
 
-//   return key
-//   // const A = g * a % p; // Calculate the corresponding public key A
-//   // return { privateKey: a, publicKey: A };
-// }
+function power(a, b, c) {
+  let x = 1;
+  let y = a;
 
-// function power(a, b, c){
-//   var x = 1
-//   var y = a
+  while (b > 0) {
+    if (b % 2 !== 0) {
+      x = (x * y) % c;
+    }
+    y = (y * y) % c;
+    b = Math.floor(b / 2);
+  }
 
-//   while (b > 0){
-//     if (b % 2 !== 0){
-//       x = (x * y) % c
-//     }
-//     y = (y * y) % c
-// 		b = (b / 2) >> 0
-//   }
-// 	return x % c
-// }
+  return BigInt(Math.floor(x % c));
+}
 
-// function encryptMessage(message, q, h, g) {
-//   var encrypted = []
-//   const k = generateKey(q)
-//   const s = power(h, k, q) // Generate a random integer k in the range [2, p-2]
-//   const p = power(g, k, q)
+function encryptMessage(msg, q, h, g) {
+  const en_msg = [];
+  const k = generateKey(q); // Private key for sender
+  const s = power(h, k, q);
+  const p = power(g, k, q);
 
-//   for (var i in message){
-//     encrypted.push(i)
-//   }
+  for (let i = 0; i < msg.length; i++) {
+    en_msg.push(msg.charCodeAt(i));
+  }
 
-//   for (var j in encrypted){
-//     j = s * j.codePointAt(0)
-//   }
-//   // const c1 = g * k % p; // Calculate the first component of the ciphertext
-//   // const c2 = (A * k * message) % p; // Calculate the second component of the ciphertext
-//   // return { c1: c1, c2: c2 };
-//   return { encrypted, p }
-// }
+  for (let i = 0; i < en_msg.length; i++) {
+    en_msg[i] = s * en_msg[i];
+  }
 
-// function decryptMessage(encrypted, p, key, q) {
-//   // const m = c1 * (p - 1 - a) % p; // Calculate the decrypted message
-//   // return m;
-//   var decrypted = ""
-//   var h = power(p, key, q)
-//   for (var i in encrypted) {
-//     decrypted = decrypted + String.fromCharCode(parseInt(i/h))
-//   }
-//   return decrypted
-// }
+  return [en_msg, p];
+}
 
-// const q = Math.floor(Math.random() * 10**50)
-// const g = Math.floor(Math.random() * q)
-// const privateKey = Math.floor(Math.random() * (q-1))
+function decryptMessage(en_msg, p, key, q) {
+  let dr_msg = '';
+  const h = power(p, key, q);
 
-// const h = g ** privateKey % g
-// const publicKey = q.toString() + " " + h.toString() + " " + g.toString()
+  for (let i = 0; i < en_msg.length; i++) {
+    dr_msg += String.fromCharCode(Math.floor(en_msg[i] / h));
+  }
 
-// // const p = BigInt('2048'); // Choose a prime number
-// // const g = BigInt('2'); // Choose a primitive root of p
-// // const { privateKey, publicKey } = generateKey(p, g);
-// console.log('PrivateKey', privateKey)
-// console.log('PublicKey', publicKey)
+  return dr_msg;
+}
 
+const q = BigInt(Math.floor(Math.random() * (BigInt(10 ** 50) - BigInt(10 ** 20))) + BigInt(10 ** 20));
+const g = BigInt(Math.floor(Math.random() * (q - 2)) + 2);
+const privateKey = BigInt(Math.floor(Math.random() * (q - 2)) + 2);
+const h = BigInt(power(g, privateKey, q));
+
+const publicKey = `${q} ${h} ${g}`;
+
+// const p = BigInt('2048'); // Choose a prime number
+// const g = BigInt('2'); // Choose a primitive root of p
+// const { privateKey, publicKey } = generateKey(p, g);
+console.log('PrivateKey', privateKey)
+console.log('PublicKey', publicKey)
+
+function encrypt(message, ws){
+  const encryption = encryptMessage(message, q, h, g)
+
+  for (let i = 0; i < encryption[0].length; i++){
+    encryption[0][i] = BigInt(encryption[0][i])
+  }
+
+  const msgJson = {
+    sender: clientId,
+    message: encryption[0],
+    p: BigInt(encryption[1]),
+    key: publicKey
+  }
+  console.log('msgKey', msgJson)
+  ws.send(JSON.stringify(msgJson));
+}
 
 function App() {
   // add random cliend id by date time
@@ -97,22 +113,26 @@ function App() {
 
     ws.onopen = (event) => {
       const connectedMsg = 'Connected'
-      // const { encryption, p } = encryptMessage(connectedMsg, q, h, g)
-      // console.log('Welcome: ', encryption)
-      // const msgKey = {encryption, p, publicKey}
-      // console.log('msgKey', msgKey)
-      // ws.send(encryption);
-      ws.send(connectedMsg);
+      // ws.send(connectedMsg);
+
+      encrypt(connectedMsg, ws)
 
     };
 
     // recieve message every start page
     ws.onmessage = (e) => {
       const message = JSON.parse(e.data);
-      // console.log(message)
-      // const decryption = decryptMessage(message.message, message.p, privateKey);
-      // console.log('Decrypyted Message: ', decryption)
-      setMessages([...messages, message]);
+
+      const decryption = decryptMessage(
+        message.message,
+        message.p,
+        privateKey,
+        q
+      );
+
+      console.log('Decrypyted Message: ', decryption)
+
+      setMessages([...messages, decryption]);
     };
 
     setWebsckt(ws);
@@ -121,17 +141,20 @@ function App() {
   }, []);
 
   const sendMessage = () => {
-    // const { encryption, p } = encryptMessage(message, q, h, g)
-    // console.log('Encrypted Message: ', encryption)
-    // const msgKey = {encryption, p, publicKey}
-    // console.log('msgKey', msgKey)
-    // websckt.send(encryption);
-    websckt.send(message);
+    encrypt(message, websckt)
+
+    // websckt.send(message);
 
     // recieve message every send message
     websckt.onmessage = (e) => {
       const message = JSON.parse(e.data);
-      setMessages([...messages, message]);
+      const decryption = decryptMessage(
+        message.message,
+        message.p,
+        privateKey,
+        q
+      );
+      setMessages([...messages, decryption]);
     };
     setMessage([]);
   };

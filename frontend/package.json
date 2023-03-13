@@ -40,11 +40,5 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
-  },
-  "devDependencies": {
-    "dotenv-webpack": "^8.0.1",
-    "webpack": "^5.76.0",
-    "webpack-bundle-analyzer": "^4.8.0",
-    "webpack-cli": "^5.0.1"
   }
 }
