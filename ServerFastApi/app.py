@@ -1,9 +1,10 @@
 import asyncio
-import json
-import random
-import threading
-from typing import List
 import websockets
+import random
+from math import pow
+import threading
+import time
+from pydantic import BaseModel
 
 
 a = random.randint(2, 10)
@@ -64,41 +65,56 @@ def decrypt(en_msg, p, key, q):
 		
 	return dr_msg
 
+class Message(BaseModel):
+    sender: str
+    message: list
+    p: int
+    key: str
+
+class Client(BaseModel):
+    name: str
+    key: str
+
 q = random.randint(pow(10, 20), pow(10, 50))
 g = random.randint(2, q)
-private_key = random.randint(2, q-1)
-
-h = pow(g, private_key, q)
-
-uri = 'ws://localhost:8000/ws/'
-clientId = str(random.randint(2, 1000))
+private_key = gen_key(q)# Private key for receiver
+h = power(g, private_key, q)
 
 public_key = str(q) + " " + str(h) + " " + str(g)
 
 name = input("Enter your name: ")
+cliente = Client(name=name, key=public_key)
 
 async def receive_messages():
-	async with websockets.connect(uri + clientId) as websocket:
-		while True:
-			message_json = await websocket.recv()
-			message = json.load(message_json)
-			print(message.message)
-			print(decrypt(message.message, message.p, private_key, q))
+    async with websockets.connect("ws://localhost:8000/ws") as websocket:
+        await websocket.send(cliente.json())
 
-async def send_message(message: str, recipients: List[str], private_key: int, q: int, g: int):
-	async with websockets.connect(uri + clientId) as websocket:
-		await websocket.send(json.dumps(message))
-		for recipient in recipients:
-			q_key, h_key, g_key = map(int, recipient.split())
-			en_msg, p = encrypt(message, q_key, h_key, g_key)
-			message_json = {"sender": name, "message": en_msg, "p": p, "key": recipient}
-			await websocket.send(json.dumps(message_json))
+        while True:
+            message = await websocket.recv()
+            message = Message.parse_raw(message)
+            if message.key == public_key:
+                message_save = message.sender + ": " + str(decrypt(message.message, message.p, private_key, q))
+                if message_save not in messages_history:
+                    messages_history.append(message_save)
+                    print(message.sender + ": " + str(message.message))
+                    print(message_save)
 
-async def handle_client():
-	async with websockets.connect(uri + clientId) as websocket:
-		client_json = {"name": name, "key": public_key}
-		await websocket.send(json.dumps(client_json))
-		await receive_messages()
+async def send_messages():
+    while True:
+        message_input = input()
+        for key in keys:
+            en_msg, p = encrypt(message_input, int(key.split(" ")[0]), int(key.split(" ")[1]), int(key.split(" ")[2]))
+            message = Message(sender=name, message=en_msg, p=p, key=key)
+            async with websockets.connect("ws://localhost:8000/ws") as websocket:
+                await websocket.send(message.json())
+        await asyncio.sleep(0.1)
 
-asyncio.run(handle_client())
+async def main():
+    tasks = [asyncio.create_task(receive_messages()), asyncio.create_task(send_messages())]
+    await asyncio.gather(*tasks)
 
+if __name__ == "__main__":
+    messages_history = []
+    keys = [public_key]
+
+    asyncio.run(main())
