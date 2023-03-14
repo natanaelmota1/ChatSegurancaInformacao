@@ -2,6 +2,7 @@ import requests
 import random
 from math import pow
 import threading
+import time
 
 a = random.randint(2, 10)
 
@@ -76,8 +77,10 @@ response = requests.post("http://127.0.0.1:8000/client", json=cliente_json)
 messages_history = []
 def receive_messages():
 	while(True):
-		messages = requests.get("http://127.0.0.1:8000/messages")
-		for message in messages.json():
+		time.sleep(20)
+		message = requests.post("http://127.0.0.1:8000/messages", json=cliente_json).json()
+		if (message != ""):
+			print(message)
 			key = message["key"]
 			if (key == public_key):
 				message_save = message["sender"] + ": " + str(decrypt(message["message"], message["p"], private_key, q))
