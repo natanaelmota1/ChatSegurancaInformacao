@@ -3,6 +3,7 @@ import random
 from math import pow
 import threading
 import time
+import hashlib
 
 a = random.randint(2, 10)
 
@@ -70,13 +71,31 @@ h = power(g, private_key, q)
 public_key = str(q) + " " + str(h) + " " + str(g)
 
 name = input("Enter your name: ")
-cliente_json = {"name": name, "key": public_key}
-response = requests.post("http://127.0.0.1:8000/client", json=cliente_json)
+registered_client = requests.post("http://127.0.0.1:8000/client/check", json={"name": name}).json()
+
+if (registered_client["registered"]):
+	password = input("Enter Your Password: ")
+else:
+	password = input("Create Your Password: ")
+
+cliente_json = {"name": name, "password": hashlib.sha256(password.encode('utf-8')).hexdigest(), "key": public_key}
+
+login = False
+response = requests.post("http://127.0.0.1:8000/client/register", json=cliente_json)
+if (response.status_code == 200):
+	print(response.json()["message"])
+	login = True
+else:
+	login = False
+
+#password = input("Digite sua senha (se já cadastrado): ")
+#cliente_json = {"name": name, "password_hash": hashlib.sha256(password.encode('utf-8')).hexdigest(), "key": public_key}
+#response = requests.post("http://127.0.0.1:8000/client", json=cliente_json)
 #print(response.json())
 
 messages_history = []
 def receive_messages():
-	while(True):
+	while(login):
 		time.sleep(20)
 		message = requests.post("http://127.0.0.1:8000/messages", json=cliente_json).json()
 		if (message != ""):
@@ -89,27 +108,44 @@ def receive_messages():
 					print(message["sender"] + ": " + str(message["message"]))
 					print(message_save)
 
-keys = []
+contatos = []
 
-while(True):
+while(login):
 
 	# Receber todas as mensagens (em segundo plano)
-    receive_thread = threading.Thread(target=receive_messages)
-    receive_thread.start()
+	receive_thread = threading.Thread(target=receive_messages)
+	receive_thread.start()
 
-    message_input = input()
+	message_input = input()
+	
+	# Verificar autenticidade
+	password = input("Enter Your Password: ")
+	cliente_json = {"name": name, "password": hashlib.sha256(password.encode('utf-8')).hexdigest(), "key": public_key}
+	response = requests.post("http://127.0.0.1:8000/client/register", json=cliente_json)
+	if (response.status_code == 200):
+		login = True
+	else:
+		login = False
 
-    # Atualizar chaves públicas salvas
-    clients = requests.get("http://127.0.0.1:8000/clients")
-    for client in clients.json():
-        key = client["key"]
-        if(key != public_key and key not in keys):
-            keys.append(key)
-    #print(keys)
+	# Atualizar chaves públicas salvas
+	clients = requests.get("http://127.0.0.1:8000/clients")
+	for client in clients.json():
+		client_name = client["name"]
+		if(client_name != name):
+			if (len(contatos) > 0):
+				for contato in contatos:
+					if(client_name == contato["name"]):
+						contato["key"] = client["key"]
+					else:
+						contatos.append(client)
+			else:
+				contatos.append(client)
+	print(contatos)
 
-    # Enviar uma mensagem
-    for key in keys:
-        en_msg, p = encrypt(message_input, int(key.split(" ")[0]), int(key.split(" ")[1]), int(key.split(" ")[2]))
-        message_json = {"sender": name, "message": en_msg, "p": p, "key": key}
-        response = requests.post("http://127.0.0.1:8000/message", json=message_json)
-        #print(response.json())
+	# Enviar uma mensagem
+
+	for contato in contatos:
+		key = contato["key"]
+		en_msg, p = encrypt(message_input, int(key.split(" ")[0]), int(key.split(" ")[1]), int(key.split(" ")[2]))
+		message_json = {"sender": name, "message": en_msg, "p": p, "key": key}
+		response = requests.post("http://127.0.0.1:8000/message", json=message_json)

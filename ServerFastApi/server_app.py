@@ -1,55 +1,42 @@
-import asyncio
-import websockets
-from WebSocket import  websockets
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from typing import List
 from pydantic import BaseModel
-
 
 app = FastAPI()
 
 class Message(BaseModel):
     sender: str
-    message: list
-    p: int
-    key: str
+    message: str
 
 class Client(BaseModel):
     name: str
-    key: str
+    websocket: WebSocket
 
-messages = []
-clients = set()
+clients = []
 
-def findMessageClient(client_key):
-    for message in messages:
-        key = message.key
-        if (key == client_key):
-            message_client = message
-            messages.remove(message)
-            return message_client
-    return ""
-
-@app.websocket("/ws")
-async def websocket_endpoint(websocket: websockets.webSocket):
+@app.websocket("/ws/{client_name}")
+async def websocket_endpoint(client_name: str, websocket: WebSocket):
     await websocket.accept()
-    clients.add(websocket)
+    client = Client(name=client_name, websocket=websocket)
+    add_client(client)
     try:
-        async for message in websocket:
-            # Handle incoming messages
-            message = Message.parse_raw(message)
-            messages.append(message)
+        while True:
+            data = await websocket.receive_text()
+            message = Message(sender=client_name, message=data)
+            await send_to_all_clients(message)
+    except WebSocketDisconnect:
+        remove_client(client)
 
-            # Send messages to clients
-            for client in clients:
-                await client.send(message.json())
-    finally:
-        clients.remove(websocket)
+def add_client(client: Client):
+    clients.append(client)
 
-@app.post("/client")
-async def send_client(client: Client):
-    clients.add(client.key)
-    return {"message": "Cliente criado com sucesso"}
+def remove_client(client: Client):
+    clients.remove(client)
+
+async def send_to_all_clients(message: Message):
+    for client in clients:
+        await client.websocket.send_json(message.dict())
 
 @app.get("/clients")
 async def get_clients():
-    return list(clients)
+    return [client.name for client in clients]

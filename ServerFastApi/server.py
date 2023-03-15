@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Depends, HTTPException
 from pydantic import BaseModel
-
+import hashlib
+import secrets
 
 app = FastAPI()
 
@@ -12,7 +13,11 @@ class Message(BaseModel):
 
 class Client(BaseModel):
     name: str
+    password: str
     key: str
+
+class ClientName(BaseModel):
+    name: str
 
 messages = []
 clients = []
@@ -25,6 +30,12 @@ def findMessageClient(client_key):
             messages.remove(message)
             return message_client
     return ""
+
+def findClientByName(name):
+    for client in clients:
+        if client.name == name:
+            return client
+    return None
 
 @app.post("/message")
 async def send_message(message: Message):
@@ -39,12 +50,34 @@ async def get_messages(client: Client):
     else:
         return message
 
-@app.post("/client")
-async def send_client(client: Client):
-    print(client.name, client.key)
-    clients.append(client)
-    return {"message": "Cliente criado com sucesso"}
+@app.post("/client/check")
+async def check_client(client_name: ClientName):
+    client = findClientByName(client_name.name)
+    if client:
+        return {"registered": True}
+    else:
+        return {"registered": False}
+
+@app.post("/client/register")
+async def register_client(client: Client):
+    existing_client = findClientByName(client.name)
+    if existing_client:
+        if not existing_client.password:
+            existing_client.password = client.password
+            return {"message": "Senha cadastrada com sucesso"}
+        elif existing_client.password != client.password:
+            raise HTTPException(status_code=400, detail="Senha incorreta")
+        else:
+            return {"message": "Senha correta"}
+    else:
+        clients.append(client)
+        return {"message": "Cliente criado com sucesso"}
 
 @app.get("/clients")
 async def get_clients():
-    return clients
+    contatos = []
+    for client in clients:
+        contatos.append({"name":client.name, "key":client.key})
+    return contatos
+
+
