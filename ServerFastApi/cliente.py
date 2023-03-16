@@ -121,7 +121,7 @@ while(login):
 	# Verificar autenticidade
 	password = input("Enter Your Password: ")
 	cliente_json = {"name": name, "password": hashlib.sha256(password.encode('utf-8')).hexdigest(), "key": public_key}
-	response = requests.post("http://127.0.0.1:8000/client/register", json=cliente_json)
+	response = requests.post("http://127.0.0.1:8000/client/auth", json=cliente_json)
 	if (response.status_code == 200):
 		login = True
 	else:
@@ -143,7 +143,6 @@ while(login):
 	print(contatos)
 
 	# Enviar uma mensagem
-
 	for contato in contatos:
 		key = contato["key"]
 		en_msg, p = encrypt(message_input, int(key.split(" ")[0]), int(key.split(" ")[1]), int(key.split(" ")[2]))

@@ -68,10 +68,22 @@ async def register_client(client: Client):
         elif existing_client.password != client.password:
             raise HTTPException(status_code=400, detail="Senha incorreta")
         else:
+            existing_client.key = client.key
             return {"message": "Senha correta"}
     else:
         clients.append(client)
         return {"message": "Cliente criado com sucesso"}
+    
+@app.post("/client/auth")
+async def auth_client(client: Client):
+    existing_client = findClientByName(client.name)
+    if existing_client:
+        if not existing_client.password:
+            raise HTTPException(status_code=400, detail="Senha incorreta")
+        elif existing_client.password != client.password or existing_client.key != client.key:
+            raise HTTPException(status_code=400, detail="Senha incorreta")
+        else:
+            return {"message": "Senha correta"}
 
 @app.get("/clients")
 async def get_clients():
